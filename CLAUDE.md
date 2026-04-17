@@ -235,11 +235,11 @@ package.json
 
 ## Deployment
 
-- **Frontend**: Vercel (static Vite build). Preview deploys per branch.
+- **Frontend**: GitHub Pages (static Vite build) via `.github/workflows/deploy-web.yml`. Served at `https://<user>.github.io/<repo>/`. Requires enabling *Source: GitHub Actions* in repo Settings → Pages. SPA client-side routing is handled by copying `index.html` → `404.html` in the workflow. Vite's `base` reads from `BASE_PATH` env var (default `/`); the workflow sets it to `/<repo>/` automatically.
 - **Backend**: Fly.io. One small Node service; 256–512MB instance is enough for Phase 1.
-- **Env vars (server)**: `ANTHROPIC_API_KEY`, `RATE_LIMIT_PER_HOUR` (default 20), `ALLOWED_ORIGINS`.
-- **Env vars (client)**: `VITE_API_BASE_URL`.
-- **CI**: GitHub Actions. Typecheck + lint + test on PR. Deploy frontend to Vercel and backend to Fly on main merge.
+- **Env vars (server)**: `ANTHROPIC_API_KEY`, `RATE_LIMIT_PER_HOUR` (default 20), `RATE_LIMIT_PER_DAY` (default 50), `ALLOWED_ORIGINS` (must include the GitHub Pages origin).
+- **Build-time vars (client)**: `VITE_API_BASE_URL` (baked into bundle at build), `BASE_PATH`. Set as GitHub Actions *Variables* (not Secrets — they end up in the bundle).
+- **CI**: GitHub Actions. Typecheck + lint + test on PR. On `main` merge, two workflows fire: `deploy-web.yml` (Pages) and `deploy-api.yml` (Fly).
 
 ## Coding Conventions
 
