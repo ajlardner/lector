@@ -8,6 +8,7 @@ primary_region = "sjc"
   PORT = "8787"
   RATE_LIMIT_PER_HOUR = "20"
   RATE_LIMIT_PER_DAY = "50"
+  ALLOWED_ORIGINS = "https://ajlar.github.io"
 
 [[services]]
   protocol = "tcp"

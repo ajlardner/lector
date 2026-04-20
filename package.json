@@ -7,9 +7,9 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel --filter=./apps/* dev",
-    "dev:web": "pnpm --filter ./apps/web dev",
-    "dev:api": "pnpm --filter ./apps/api dev",
+    "dev": "pnpm --filter @lector/shared build && pnpm -r --parallel --filter=./apps/* dev",
+    "dev:web": "pnpm --filter @lector/shared build && pnpm --filter ./apps/web dev",
+    "dev:api": "pnpm --filter @lector/shared build && pnpm --filter ./apps/api dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
