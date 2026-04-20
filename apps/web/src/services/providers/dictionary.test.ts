@@ -38,6 +38,36 @@ describe('WiktionaryDictionary', () => {
     }
   });
 
+  it('retries with lowercase when capitalized word has no source-lang entry', async () => {
+    const capitalizedResponse = {
+      en: [{ partOfSpeech: 'Noun', language: 'English', definitions: [{ definition: 'a surname' }] }],
+    };
+    const lowercaseResponse = {
+      es: [{ partOfSpeech: 'Adverb', language: 'Spanish', definitions: [{ definition: 'yesterday' }] }],
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(capitalizedResponse), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(lowercaseResponse), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const dict = createWiktionaryDictionary();
+    const r = await dict.lookup({
+      text: 'Ayer',
+      context: '',
+      sourceLang: 'es',
+      targetLang: 'en',
+      promptId: 'es-basic',
+    });
+    expect(isOk(r)).toBe(true);
+    if (isOk(r)) {
+      expect(r.value.translation).toBe('yesterday');
+      expect(r.value.lemma).toBe('ayer');
+      expect(r.value.partOfSpeech).toBe('Adverb');
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('ayer');
+  });
+
   it('returns err not_found on 404', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
     const dict = createWiktionaryDictionary();

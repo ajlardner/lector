@@ -7,31 +7,40 @@ const WIKI_BASE =
 const stripHtml = (s: string) =>
   s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
+type WiktEntry = {
+  partOfSpeech?: string;
+  language?: string;
+  definitions?: Array<{ definition?: string }>;
+};
+
+const fetchDefinition = async (
+  term: string,
+  sourceLang: string,
+): Promise<{ match: WiktEntry; term: string } | null> => {
+  const resp = await fetch(`${WIKI_BASE}${encodeURIComponent(term)}`);
+  if (!resp.ok) return null;
+  const data = (await resp.json()) as Record<string, WiktEntry[]>;
+  const entry = data[sourceLang]?.[0];
+  if (!entry?.definitions?.[0]?.definition) return null;
+  return { match: entry, term };
+};
+
 export const createWiktionaryDictionary = (): DictionaryProvider => ({
   lookup: async (req) => {
     try {
-      const resp = await fetch(`${WIKI_BASE}${encodeURIComponent(req.text)}`);
-      if (resp.status === 404) return err({ reason: 'not_found' });
-      if (!resp.ok) return err({ reason: 'network', detail: `status ${resp.status}` });
+      const lower = req.text.toLowerCase();
+      const hit =
+        (await fetchDefinition(req.text, req.sourceLang)) ??
+        (req.text !== lower ? await fetchDefinition(lower, req.sourceLang) : null);
 
-      const data = (await resp.json()) as Record<string, Array<{
-        partOfSpeech?: string;
-        language?: string;
-        definitions?: Array<{ definition?: string }>;
-      }>>;
+      if (!hit) return err({ reason: 'not_found' });
 
-      const match = data[req.sourceLang]?.[0];
-      if (!match) return err({ reason: 'not_found' });
-
-      const defRaw = match.definitions?.[0]?.definition;
-      if (!defRaw) return err({ reason: 'not_found' });
-
-      const result: Awaited<ReturnType<DictionaryProvider['lookup']>> = ok({
+      const defRaw = hit.match.definitions?.[0]?.definition ?? '';
+      return ok({
         translation: stripHtml(defRaw),
-        lemma: req.text,
-        ...(match.partOfSpeech ? { partOfSpeech: match.partOfSpeech } : {}),
+        lemma: hit.term,
+        ...(hit.match.partOfSpeech ? { partOfSpeech: hit.match.partOfSpeech } : {}),
       });
-      return result;
     } catch (e) {
       return err({ reason: 'network', detail: (e as Error).message });
     }
