@@ -2,6 +2,7 @@ export type DbClient = {
   exec: (sql: string, bind?: unknown[]) => Promise<void>;
   query: <T = Record<string, unknown>>(sql: string, bind?: unknown[]) => Promise<T[]>;
   close: () => Promise<void>;
+  persistent: boolean;
 };
 
 type ClientOpts = { mode: 'opfs'; filename: string } | { mode: 'memory' };
@@ -27,6 +28,7 @@ const createWorkerClient = (filename: string): Promise<DbClient> =>
               worker.postMessage({ type: 'query', sql, bind, id });
             }),
           close: async () => worker.terminate(),
+          persistent: data.persistent ?? true,
         });
       }
       if (data.type === 'result') {
@@ -65,6 +67,7 @@ const createMemoryClient = async (): Promise<DbClient> => {
       close: async () => {
         db.close();
       },
+      persistent: false,
     };
   }
 
@@ -89,6 +92,7 @@ const createMemoryClient = async (): Promise<DbClient> => {
       return rows;
     },
     close: async () => db.close(),
+    persistent: false,
   };
 };
 

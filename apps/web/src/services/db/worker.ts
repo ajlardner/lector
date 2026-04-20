@@ -13,8 +13,14 @@ self.onmessage = async (ev: MessageEvent<Msg>) => {
   try {
     if (msg.type === 'open') {
       const sqlite3 = await sqlite3InitModule({ print: () => {}, printErr: () => {} });
-      db = new sqlite3.oo1.OpfsDb(msg.filename);
-      self.postMessage({ type: 'opened' });
+      let persistent = false;
+      try {
+        db = new sqlite3.oo1.OpfsDb(msg.filename);
+        persistent = true;
+      } catch {
+        db = new sqlite3.oo1.DB(':memory:', 'ct');
+      }
+      self.postMessage({ type: 'opened', persistent });
       return;
     }
     if (!db) throw new Error('db not opened');

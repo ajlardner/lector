@@ -7,10 +7,6 @@ const WIKI_BASE =
 const stripHtml = (s: string) =>
   s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
-const SOURCE_LANG_NAMES: Record<string, string> = {
-  es: 'Spanish',
-};
-
 export const createWiktionaryDictionary = (): DictionaryProvider => ({
   lookup: async (req) => {
     try {
@@ -24,12 +20,9 @@ export const createWiktionaryDictionary = (): DictionaryProvider => ({
         definitions?: Array<{ definition?: string }>;
       }>>;
 
-      const en = data.en ?? [];
-      const sourceName = SOURCE_LANG_NAMES[req.sourceLang];
-      const match =
-        en.find((e) => e.language === sourceName) ?? en[0];
-
+      const match = data[req.sourceLang]?.[0];
       if (!match) return err({ reason: 'not_found' });
+
       const defRaw = match.definitions?.[0]?.definition;
       if (!defRaw) return err({ reason: 'not_found' });
 

@@ -3,7 +3,7 @@ import { createWiktionaryDictionary } from './dictionary.js';
 import { isOk, isErr } from '@lector/shared';
 
 const wiktionaryResponse = {
-  en: [
+  es: [
     {
       partOfSpeech: 'Verb',
       language: 'Spanish',
